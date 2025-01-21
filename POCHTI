@@ -1,12 +1,10 @@
 #include <stdio.h> 
 #include <string.h> 
 #include <stdbool.h>  // For 'true' and 'false' 
-#include <ctype.h>    // For checking if input is a number 
+#include <ctype.h>    // For case-insensitive checks 
 #include <stdlib.h>   
- 
-#define max 10  
- 
 
+#define MAX 10  
 
 // Define the Book structure 
 typedef struct { 
@@ -16,10 +14,8 @@ typedef struct {
     bool borrowed;  
 } Book; 
 
-
-
-// Initialize the list of books 
-Book books[max] = { 
+// Array of books
+Book books[MAX] = { 
     {1, "Abai", "Mukhtar Auezov", false}, 
     {2, "AZ i Ia", "Olzhas Suleimenov", false}, 
     {3, "My name is Qozha", "Berdibek Soqpaqbayev", false}, 
@@ -30,117 +26,149 @@ Book books[max] = {
     {8, "Ushqan uyia", "Baurzhan Momyshuly", false}, 
     {9, "Zhabaiy alma", "Sain Muratbekov", false}, 
     {10, "Zhusan iysy", "Sain Muratbekov", false} 
-}; 
+};
 
+// Convert a string to lowercase
+void toLowerCase(char *str) {
+    for (int i = 0; str[i]; i++) {
+        str[i] = tolower(str[i]);
+    }
+}
 
-
+// Display available books
 void availableBooks() { 
     printf("Available books:\n"); 
-    int availableFound = 0; // Flag to track if there are available books 
- 
-    for (int i = 0; i < max; i++) { 
+    int availableFound = 0;
+
+    for (int i = 0; i < MAX; i++) { 
         if (!books[i].borrowed) { // Check if the book is not borrowed 
             printf("ID: %d | Title: '%s' | Author: %s\n", books[i].ID, books[i].title, books[i].author); 
             availableFound = 1; 
         } 
     } 
- 
-    if (!availableFound) {printf("No available books right now.\n");} 
-} 
 
+    if (!availableFound) { 
+        printf("No available books right now.\n"); 
+    }
+}
 
-
+// Borrow a book
 void borrowBook() { 
     char input[50]; 
     int found = 0; 
     printf("Enter the book's ID or Title you want to borrow: \n"); 
-    scanf("%s", input); 
- 
-    for (int i = 0; i < max; i++) { 
-        if (isdigit(input[0])) { 
-            int id = atoi(input);  
+    getchar(); // Clear newline character
+    fgets(input, sizeof(input), stdin);
+    input[strcspn(input, "\n")] = '\0'; // Remove newline character
+
+    char lowerInput[50];
+    strcpy(lowerInput, input);
+    toLowerCase(lowerInput); // Convert input to lowercase
+
+    for (int i = 0; i < MAX; i++) { 
+        char lowerTitle[50];
+        strcpy(lowerTitle, books[i].title);
+        toLowerCase(lowerTitle); // Convert title to lowercase
+
+        if (isdigit(lowerInput[0])) { 
+            int id = atoi(lowerInput);  
             if (books[i].ID == id && !books[i].borrowed) { 
                 printf("You have borrowed the book: '%s' by %s\n", books[i].title, books[i].author); 
                 books[i].borrowed = true;   
                 found = 1; 
                 break; 
             } 
-        } else { 
-            // Check if the input matches the book's title 
-            if (strcmp(books[i].title, input) == 0 && !books[i].borrowed) { 
-                printf("You have borrowed the book: '%s' by %s\n", books[i].title, books[i].author); 
-                books[i].borrowed = true; // Mark as borrowed 
-                found = 1; 
-                break; 
-            } 
-        } 
+        } else if (strcmp(lowerTitle, lowerInput) == 0 && !books[i].borrowed) { 
+            printf("You have borrowed the book: '%s' by %s\n", books[i].title, books[i].author); 
+            books[i].borrowed = true;
+            found = 1; 
+            break; 
+        }
     } 
- 
-    if (!found) {printf("Sorry, this book is either not available or has already been borrowed.\n");} 
-} 
- 
 
+    if (!found) { 
+        printf("Sorry, this book is either not available or has already been borrowed.\n"); 
+    }
+}
 
+// Return a book
 void returnBook() { 
     char input[50]; 
-    int found = 0; // To check if the book is found 
+    int found = 0;
     printf("Enter the book's ID or Title you want to return: \n"); 
-    scanf("%s", input); // Read user input (ID or title) 
- 
-    for (int i = 0; i < max; i++) { 
-        // Check if the input is a number (ID) 
-        if (isdigit(input[0])) { 
-            int id = atoi(input); // Convert string to integer 
+    getchar(); // Clear newline character
+    fgets(input, sizeof(input), stdin);
+    input[strcspn(input, "\n")] = '\0'; // Remove newline character
+
+    char lowerInput[50];
+    strcpy(lowerInput, input);
+    toLowerCase(lowerInput); // Convert input to lowercase
+
+    for (int i = 0; i < MAX; i++) { 
+        char lowerTitle[50];
+        strcpy(lowerTitle, books[i].title);
+        toLowerCase(lowerTitle); // Convert title to lowercase
+
+        if (isdigit(lowerInput[0])) { 
+            int id = atoi(lowerInput); 
             if (books[i].ID == id && books[i].borrowed) { 
                 printf("You have returned the book: '%s' by %s\n", books[i].title, books[i].author); 
                 books[i].borrowed = false; // Mark as returned 
                 found = 1; 
                 break; 
             } 
-        } else { 
-            // Check if the input matches the book's title 
-            if (strcmp(books[i].title, input) == 0 && books[i].borrowed) { 
-                printf("You have returned the book: '%s' by %s\n", books[i].title, books[i].author); 
-                books[i].borrowed = false; // Mark as returned 
-                found = 1; 
-                break; 
-            } 
-        } 
+        } else if (strcmp(lowerTitle, lowerInput) == 0 && books[i].borrowed) { 
+            printf("You have returned the book: '%s' by %s\n", books[i].title, books[i].author); 
+            books[i].borrowed = false; // Mark as returned 
+            found = 1; 
+            break; 
+        }
     } 
- 
-    if (!found) {printf("Sorry, this book is either not available or was not borrowed.\n");} 
-} 
- 
 
+    if (!found) { 
+        printf("Sorry, this book is either not available or was not borrowed.\n"); 
+    }
+}
 
+// Search for a book
 void searchBook() { 
     char input[50]; 
     int found = 0; 
     printf("Enter the Book ID or Title to search: \n"); 
-    scanf("%s", input); 
- 
-    for (int i = 0; i <max; i++) { 
-        if (isdigit(input[0])) { 
-            int id = atoi(input); 
+    getchar(); // Clear newline character from previous input
+    fgets(input, sizeof(input), stdin);
+    input[strcspn(input, "\n")] = '\0'; // Remove newline character
+
+    char lowerInput[50];
+    strcpy(lowerInput, input);
+    toLowerCase(lowerInput); // Convert the input to lowercase
+
+    for (int i = 0; i < MAX; i++) { 
+        char lowerTitle[50];
+        strcpy(lowerTitle, books[i].title);
+        toLowerCase(lowerTitle); // Convert the book title to lowercase
+
+        if (isdigit(lowerInput[0])) { 
+            int id = atoi(lowerInput); 
             if (books[i].ID == id) { 
                 printf("Book found: '%s' by %s\n", books[i].title, books[i].author); 
                 found = 1; 
                 break; 
             } 
-        } else { 
-            if (strcmp(books[i].title, input) == 0) { 
-                printf("Book found: '%s' by %s\n", books[i].title, books[i].author); 
-                found = 1; 
-                break; 
-            } 
-        } 
+        } else if (strstr(lowerTitle, lowerInput)) { 
+            // Use strstr to check if input is a substring of the title
+            printf("Book found: '%s' by %s\n", books[i].title, books[i].author); 
+            found = 1; 
+        }
     } 
- 
-    if (!found) {printf("Sorry, the book was not found.\n");} 
-} 
- 
+
+    if (!found) { 
+        printf("Sorry, the book was not found.\n"); 
+    }
+}
 
 
+// Fine management
 void fineManagement() { 
     int day, fine = 3; 
     printf("For how many days did you borrow the book? \n"); 
@@ -150,14 +178,12 @@ void fineManagement() {
         printf("Your fine due to overdue is %d.\n", fine); 
     } else { 
         printf("No fine punishment!\n"); 
-    } 
-} 
- 
-
+    }
+}
 
 int main() { 
     int action; 
- 
+
     do { 
         printf("\nSelect an action: \n"); 
         printf("1. Available books\n"); 
@@ -167,7 +193,7 @@ int main() {
         printf("5. Fine management\n"); 
         printf("Enter action number: "); 
         scanf("%d", &action); 
- 
+
         switch(action) { 
             case 1: availableBooks(); break; 
             case 2: borrowBook(); break; 
@@ -176,7 +202,7 @@ int main() {
             case 5: fineManagement(); break; 
             default: printf("Invalid selection, try again.\n"); 
         } 
-    } while (action >= 1 && action <= 4); 
- 
+    } while (action >= 1 && action <= 5); 
+
     return 0; 
 }
