@@ -1,0 +1,303 @@
+#include <stdio.h> 
+#include <string.h> 
+#include <stdbool.h> 
+#include <ctype.h>    // For case-insensitive checks 
+#include <stdlib.h>   
+#include <time.h> 
+
+#define MAX 10  
+#define FINE_PER_DAY 5
+
+
+ 
+typedef struct { 
+    int ID; 
+    char title[50]; 
+    char author[50]; 
+    bool borrowed;  
+} Book; 
+
+Book books[MAX] = { 
+    {1, "Abai", "Mukhtar Auezov", false}, 
+    {2, "AZ i Ia", "Olzhas Suleimenov", false}, 
+    {3, "My name is Qozha", "Berdibek Soqpaqbayev", false}, 
+    {4, "Qara sozder", "Abai Qunanbaiuly", false}, 
+    {5, "Qan men Ter", "Abdizhamil Nurpeisov", false}, 
+    {6, "Qozy Korpesh - Byan Sulu", "Ghabit Musrepov", false}, 
+    {7, "Qyz Zhibek", "Saken Seifullin", false}, 
+    {8, "Ushqan uyia", "Baurzhan Momyshuly", false}, 
+    {9, "Zhabaiy alma", "Sain Muratbekov", false}, 
+    {10, "Zhusan iysy", "Sain Muratbekov", false} 
+};
+
+
+
+void toLowerCase(char *str) {
+    for (int i = 0; str[i]; i++) {
+        str[i] = tolower(str[i]);
+    }
+}
+
+
+
+void generateReturnReceipt(Book book) {
+    char filename[50];
+    snprintf(filename, sizeof(filename), "Book_%d_Return_Receipt.txt", book.ID);
+
+    FILE *file = fopen(filename, "w");
+    if (file == NULL) {
+        perror("Error creating receipt file");
+        return;
+    }
+
+    char issueDate[20];
+    char dueDate[20];
+    time_t now = time(NULL);
+    struct tm *local = localtime(&now);
+    strftime(issueDate, sizeof(issueDate), "%d/%m/%Y", local);
+
+    local->tm_mday += 7;  // Due date is 7 days later
+    mktime(local);        // Normalize date
+    strftime(dueDate, sizeof(dueDate), "%d/%m/%Y", local);
+
+    fprintf(file, "Receipt for Returned Book\n");
+    fprintf(file, "--------------------------\n");
+    fprintf(file, "Title: %s\n", book.title);
+    fprintf(file, "Book ID: %d\n", book.ID);
+    fprintf(file, "Issue Date: %s\n", issueDate);
+    fprintf(file, "Due Date: %s\n", dueDate);
+
+    fclose(file);
+    printf("Return receipt generated successfully: %s\n", filename);
+}
+
+
+
+void generateReceipt(Book book) {
+    char filename[50];
+    snprintf(filename, sizeof(filename), "Book_%d_Receipt.txt", book.ID);
+
+    FILE *file = fopen(filename, "w");
+    if (file == NULL) {
+        perror("Error creating receipt file");
+        return;
+    }
+
+    char issueDate[20];
+    char dueDate[20];
+    time_t now = time(NULL);
+    struct tm *local = localtime(&now);
+    strftime(issueDate, sizeof(issueDate), "%d/%m/%Y", local);
+
+    local->tm_mday += 7;  // Due date is 7 days later
+    mktime(local);        // Normalize date
+    strftime(dueDate, sizeof(dueDate), "%d/%m/%Y", local);
+
+    fprintf(file, "Receipt for Borrowed Book\n");
+    fprintf(file, "--------------------------\n");
+    fprintf(file, "Title: %s\n", book.title);
+    fprintf(file, "Book ID: %d\n", book.ID);
+    fprintf(file, "Issue Date: %s\n", issueDate);
+    fprintf(file, "Due Date: %s\n", dueDate);
+
+    fclose(file);
+    printf("Receipt generated successfully: %s\n", filename);
+}
+
+
+
+void availableBooks() { 
+    printf("\n\nAvailable books:\n"); 
+    int availableFound = 0;
+
+    for (int i = 0; i < MAX; i++) { 
+        if (!books[i].borrowed) { // Check if the book is not borrowed 
+            printf("ID: %d | Title: '%s' | Author: %s\n", books[i].ID, books[i].title, books[i].author); 
+            availableFound = 1; 
+        } 
+    } 
+
+    if (!availableFound) {printf("No available books right now.\n");}
+}
+
+
+
+void borrowBook() { 
+    char input[50]; 
+    int found = 0; 
+    printf("\n\nEnter the book's ID or Title you want to borrow: \n"); 
+    getchar(); // Clear newline character
+    fgets(input, sizeof(input), stdin);
+    input[strcspn(input, "\n")] = '\0'; // Remove newline character
+
+    char lowerInput[50];
+    strcpy(lowerInput, input);
+    toLowerCase(lowerInput); // Convert input to lowercase
+
+    for (int i = 0; i < MAX; i++) { 
+        char lowerTitle[50];
+        strcpy(lowerTitle, books[i].title);
+        toLowerCase(lowerTitle); // Convert title to lowercase
+
+        if (isdigit(lowerInput[0])) { 
+            int id = atoi(lowerInput);  
+            if (books[i].ID == id && !books[i].borrowed) { 
+                printf("\nYou have borrowed the book: '%s' by %s\n", books[i].title, books[i].author); 
+                books[i].borrowed = true;   
+                generateReceipt(books[i]);
+                found = 1; 
+                break; 
+            } 
+        } else if (strcmp(lowerTitle, lowerInput) == 0 && !books[i].borrowed) { 
+            printf("\nYou have borrowed the book: '%s' by %s\n", books[i].title, books[i].author); 
+            books[i].borrowed = true;
+            generateReceipt(books[i]);
+            found = 1; 
+            break; 
+        }
+    } 
+
+    if (!found) {printf("\nSorry, this book is either not available or has already been borrowed.\n");}
+}
+
+
+
+void returnBook() { 
+    char input[50]; 
+    int found = 0;
+    printf("\n\nEnter the book's ID or Title you want to return: \n"); 
+    getchar(); // Clear newline character
+    fgets(input, sizeof(input), stdin);
+    input[strcspn(input, "\n")] = '\0'; // Remove newline character
+
+    char lowerInput[50];
+    strcpy(lowerInput, input);
+    toLowerCase(lowerInput); // Convert input to lowercase
+
+    for (int i = 0; i < MAX; i++) { 
+        char lowerTitle[50];
+        strcpy(lowerTitle, books[i].title);
+        toLowerCase(lowerTitle); // Convert title to lowercase
+
+        if (isdigit(lowerInput[0])) { 
+            int id = atoi(lowerInput); 
+            if (books[i].ID == id && books[i].borrowed) { 
+                printf("\nYou have returned the book: '%s' by %s\n", books[i].title, books[i].author); 
+                books[i].borrowed = false;
+                generateReturnReceipt(books[i]); 
+                found = 1; 
+                break; 
+            } 
+        } else if (strcmp(lowerTitle, lowerInput) == 0 && books[i].borrowed) { 
+            printf("\nYou have returned the book: '%s' by %s\n", books[i].title, books[i].author); 
+            books[i].borrowed = false;
+            generateReturnReceipt(books[i]);
+            found = 1; 
+                break; 
+        }
+    } 
+
+    if (!found) {printf("\nSorry, this book is either not available or was not borrowed.\n");}
+}
+
+
+
+void searchBook() { 
+    char input[50]; 
+    int found = 0; 
+    printf("\n\nEnter the Book ID or Title to search: \n"); 
+    getchar(); // Clear newline character from previous input
+    fgets(input, sizeof(input), stdin);
+    input[strcspn(input, "\n")] = '\0'; // Remove newline character
+
+    char lowerInput[50];
+    strcpy(lowerInput, input);
+    toLowerCase(lowerInput); // Convert the input to lowercase
+
+    for (int i = 0; i < MAX; i++) { 
+        char lowerTitle[50];
+        strcpy(lowerTitle, books[i].title);
+        toLowerCase(lowerTitle); // Convert the book title to lowercase
+
+        if (isdigit(lowerInput[0])) { 
+            int id = atoi(lowerInput); 
+            if (books[i].ID == id) { 
+                printf("Book found: '%s' by %s\n", books[i].title, books[i].author); 
+                found = 1; 
+                break; 
+            } 
+        } else if (strstr(lowerTitle, lowerInput)) { 
+            // Use strstr to check if input is a substring of the title
+            printf("Book found: '%s' by %s\n", books[i].title, books[i].author); 
+            found = 1; 
+        }
+    } 
+
+    if (!found) { 
+        printf("Sorry, the book was not found.\n"); 
+    }
+}
+
+
+
+void fineManagement() {
+    char dueDateStr[20], returnDateStr[20];
+    printf("Enter the due date (DD/MM/YYYY): ");
+    scanf("%s", dueDateStr);
+
+    printf("Enter the return date (DD/MM/YYYY): ");
+    scanf("%s", returnDateStr);
+
+    // Parse due date
+    struct tm dueDate = {0};
+    sscanf(dueDateStr, "%d/%d/%d", &dueDate.tm_mday, &dueDate.tm_mon, &dueDate.tm_year);
+    dueDate.tm_mon -= 1;  // Months are 0-11 in struct tm
+    dueDate.tm_year -= 1900; // Years since 1900
+
+    // Parse return date
+    struct tm returnDate = {0};
+    sscanf(returnDateStr, "%d/%d/%d", &returnDate.tm_mday, &returnDate.tm_mon, &returnDate.tm_year);
+    returnDate.tm_mon -= 1;
+    returnDate.tm_year -= 1900;
+
+    // Calculate the difference in days
+    time_t due = mktime(&dueDate);
+    time_t returned = mktime(&returnDate);
+    double diffInSeconds = difftime(returned, due);
+    int overdueDays = (int)(diffInSeconds / (60 * 60 * 24));
+
+    if (overdueDays > 0) {
+        int fine = overdueDays * FINE_PER_DAY;
+        printf("This book is %d days overdue. Your fine is: %d\n", overdueDays, fine);
+    } else {
+        printf("Book returned on time. No fine is due.\n");
+    }
+}
+
+
+
+int main() { 
+    int action; 
+
+    do { 
+        printf("\n\nSelect an action: \n"); 
+        printf("1. Available books\n"); 
+        printf("2. Borrow a book\n"); 
+        printf("3. Return a book\n"); 
+        printf("4. Search a book\n"); 
+        printf("5. Fine management\n"); 
+        printf("Enter action number: "); 
+        scanf("%d", &action); 
+
+        switch(action) { 
+            case 1: availableBooks(); break; 
+            case 2: borrowBook(); break; 
+            case 3: returnBook(); break; 
+            case 4: searchBook(); break; 
+            case 5: fineManagement(); break; 
+            default: printf("Invalid selection, try again.\n"); 
+        } 
+    } while (action >= 1 && action <= 5); 
+
+    return 0; 
+}
