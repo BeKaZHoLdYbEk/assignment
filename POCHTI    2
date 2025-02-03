@@ -286,6 +286,7 @@ int main() {
         printf("3. Return a book\n"); 
         printf("4. Search a book\n"); 
         printf("5. Fine management\n"); 
+        printf("6. Exit\n"); 
         printf("Enter action number: "); 
         scanf("%d", &action); 
 
@@ -295,6 +296,7 @@ int main() {
             case 3: returnBook(); break; 
             case 4: searchBook(); break; 
             case 5: fineManagement(); break; 
+            case 6: break; 
             default: printf("Invalid selection, try again.\n"); 
         } 
     } while (action >= 1 && action <= 5); 
